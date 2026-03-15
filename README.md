@@ -6,7 +6,7 @@
 [Click to Open](https://akshatsingh1427.github.io/Fincal/)
 
 ## 🎥 Demo Video
-[Watch on YouTube](your-youtube-or-drive-link-here)
+[Watch on YouTube](https://www.youtube.com/watch?v=iQe1NCyhHJY)
 
 ---
 
