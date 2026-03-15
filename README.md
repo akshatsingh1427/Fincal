@@ -42,7 +42,7 @@ FinCal is an interactive, educational financial calculator built for everyday in
 git clone https://github.com/yourusername/fincal-wealth-universe
 
 # Open in browser
-just open index.html — no server needed!
+just open index.html — no server needed
 ```
 
 ---
