@@ -3,7 +3,7 @@
 > Built for **FinCal Innovation Hackathon** | Technex, IIT (BHU) Varanasi 2026
 
 ## 🚀 Live Demo
-[Click to Open](your-github-pages-link-here)
+[Click to Open](https://akshatsingh1427.github.io/Fincal/)
 
 ## 🎥 Demo Video
 [Watch on YouTube](your-youtube-or-drive-link-here)
