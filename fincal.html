@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinCal – Wealth Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --g1:#0a1f14;--g2:#0d2b1a;--g3:#112d1c;
+  --accent:#2dce7a;--accent2:#1aab5f;--gold:#f5c542;
+  --teal:#00c9a7;--card:rgba(10,28,18,0.82);
+  --border:rgba(45,206,122,0.18);--text:#e8f5ee;--muted:#6b9c7e;
+  --radius:16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh;font-family:'Outfit',sans-serif;color:var(--text);
+  background:
+    radial-gradient(ellipse 120% 80% at 20% 20%, rgba(0,80,40,.55) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 70% at 80% 80%, rgba(0,60,35,.5) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(10,40,22,.4) 0%, transparent 60%),
+    linear-gradient(160deg, #071812 0%, #0b2016 35%, #091a12 65%, #061410 100%);
+  overflow-x:hidden;
+}
+
+/* subtle animated mesh */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle at 15% 25%, rgba(45,206,122,.07) 0%, transparent 35%),
+    radial-gradient(circle at 85% 70%, rgba(0,201,167,.06) 0%, transparent 30%),
+    radial-gradient(circle at 50% 50%, rgba(26,171,95,.04) 0%, transparent 40%);
+  animation:meshpulse 8s ease-in-out infinite alternate;
+}
+@keyframes meshpulse{
+  from{opacity:.7;transform:scale(1)}
+  to{opacity:1;transform:scale(1.04)}
+}
+
+/* grid dots pattern */
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(45,206,122,.12) 1px,transparent 1px);
+  background-size:32px 32px;opacity:.4;
+}
+
+.shell{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 20px 72px}
+
+/* HERO */
+.hero{text-align:center;padding:64px 0 36px;animation:fadeDown .8s ease both}
+.hero h1{
+  font-size:clamp(2.2rem,5.5vw,3.9rem);font-weight:800;line-height:1.1;
+  color:#fff;margin-bottom:12px;
+  text-shadow:0 0 30px rgba(45,206,122,.3)}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{font-size:.98rem;color:var(--muted);max-width:500px;margin:0 auto 26px;line-height:1.7}
+
+/* TABS */
+.tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:30px;animation:fadeUp .7s .1s ease both}
+.tab{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:1.5px;
+  text-transform:uppercase;padding:8px 16px;border-radius:30px;
+  border:1px solid rgba(45,206,122,.2);
+  background:rgba(10,28,18,.7);
+  color:var(--muted);cursor:pointer;transition:all .2s;backdrop-filter:blur(10px)}
+.tab:hover{border-color:var(--accent);color:var(--accent)}
+.tab.on{background:var(--accent2);color:#fff;border-color:transparent;font-weight:700;
+  box-shadow:0 0 20px rgba(45,206,122,.3)}
+
+/* PANELS */
+.panel{display:none;animation:fadeUp .4s ease both}.panel.on{display:block}
+
+/* CARD */
+.card{
+  background:rgba(8,22,14,.85);
+  border:1px solid rgba(45,206,122,.15);
+  border-radius:var(--radius);padding:26px 24px 22px;
+  backdrop-filter:blur(20px);box-shadow:0 4px 30px rgba(0,0,0,.5)}
+.ct{font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:3px}
+.cs{font-size:.8rem;color:var(--muted);margin-bottom:20px;line-height:1.55}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:660px){.g2{grid-template-columns:1fr}}
+
+/* FIELD */
+.field{margin-bottom:18px}
+.field label{display:flex;justify-content:space-between;
+  font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;
+  color:#4a7a5e;margin-bottom:8px}
+.field label span{font-family:'Space Mono',monospace;color:var(--gold);
+  font-size:.86rem;letter-spacing:0;text-transform:none}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:3px;outline:none;cursor:pointer;
+  background:linear-gradient(to right,var(--accent2) 0%,var(--accent2) var(--v,40%),rgba(255,255,255,.1) var(--v,40%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;
+  width:17px;height:17px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 10px rgba(45,206,122,.5);transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.22)}
+
+/* PILLS */
+.pills{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+@media(max-width:480px){.pills{grid-template-columns:1fr 1fr}}
+.pill{background:rgba(6,18,11,.7);border:1px solid rgba(45,206,122,.12);
+  border-radius:12px;padding:14px 10px;text-align:center;transition:transform .18s}
+.pill:hover{transform:translateY(-2px)}
+.pill .pl{font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:#3a6a4e;margin-bottom:5px}
+.pill .pv{font-size:1.12rem;font-weight:700;font-family:'Space Mono',monospace;color:#fff}
+.pv.g{color:var(--teal)}.pv.a{color:var(--gold)}
+.pill.star{border-color:rgba(245,197,66,.25);box-shadow:0 0 18px rgba(245,197,66,.07)}
+
+/* CHART WRAP */
+.cw{background:rgba(6,16,10,.75);border:1px solid rgba(45,206,122,.1);
+  border-radius:var(--radius);padding:18px;margin-top:18px}
+.cw canvas{max-height:260px}
+.insight{font-family:'Space Mono',monospace;font-size:.68rem;color:#3a6a4e;
+  text-align:center;margin-top:10px}
+
+/* GOAL BAR */
+.gbl{display:flex;justify-content:space-between;font-size:.68rem;color:#3a6a4e;margin-bottom:5px}
+.gbt{height:7px;border-radius:7px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:16px}
+.gbf{height:100%;border-radius:7px;
+  background:linear-gradient(90deg,var(--accent2),var(--teal));
+  transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:1.5px;
+  text-transform:uppercase;color:#3a6a4e;padding:8px 10px;text-align:left;
+  border-bottom:1px solid rgba(45,206,122,.1)}
+.tbl td{padding:10px 10px;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.04)}
+.tbl tr:hover td{background:rgba(45,206,122,.03)}
+.tag{display:inline-block;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:1px}
+.tag.l{background:rgba(45,206,122,.14);color:var(--accent)}
+.tag.m{background:rgba(245,197,66,.14);color:var(--gold)}
+.tag.h{background:rgba(255,80,80,.14);color:#ff7070}
+
+/* EDU GRID */
+.eg{display:grid;grid-template-columns:repeat(auto-fit,minmax(226px,1fr));gap:14px}
+.ec{background:rgba(8,22,14,.85);border:1px solid rgba(45,206,122,.12);
+  border-radius:14px;padding:18px;transition:transform .2s,border-color .2s}
+.ec:hover{transform:translateY(-3px);border-color:rgba(45,206,122,.3)}
+.ec .ei{font-size:1.5rem;margin-bottom:10px}
+.ec h3{font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:5px}
+.ec p{font-size:.78rem;line-height:1.62;color:#5a8a6e}
+.ec .ef{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--teal);
+  background:rgba(0,201,167,.06);border-radius:7px;padding:7px 10px;margin-top:9px}
+
+/* JOURNEY */
+.jsteps{display:flex;overflow-x:auto;padding-bottom:8px}
+.jstep{min-width:144px;flex:1;display:flex;flex-direction:column;align-items:center;
+  text-align:center;position:relative;padding:0 8px 20px}
+.jstep::after{content:'';position:absolute;top:19px;left:55%;right:-45%;
+  height:2px;background:linear-gradient(90deg,var(--accent),var(--teal))}
+.jstep:last-child::after{display:none}
+.jn{width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent2),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.9rem;font-weight:800;color:#fff;margin-bottom:10px;
+  position:relative;z-index:1;box-shadow:0 0 14px rgba(45,206,122,.2)}
+.jt{font-size:.74rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.jd{font-size:.68rem;color:#4a7a5e;line-height:1.5}
+
+/* FOOTER */
+footer{text-align:center;margin-top:56px;padding:24px 0;
+  border-top:1px solid rgba(45,206,122,.1)}
+.ft-badge{display:inline-flex;align-items:center;gap:7px;
+  font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--accent);
+  border:1px solid rgba(45,206,122,.22);border-radius:30px;
+  padding:6px 16px;margin-bottom:12px;background:rgba(45,206,122,.05)}
+.ft-badge::before{content:'';width:5px;height:5px;border-radius:50%;
+  background:var(--accent);animation:pulse 2s infinite}
+footer p{font-size:.68rem;color:#2a5a3e;font-family:'Space Mono',monospace;line-height:1.8}
+footer span{color:var(--gold)}
+footer em{color:var(--accent);font-style:normal}
+
+@keyframes fadeDown{from{opacity:0;transform:translateY(-22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(45,206,122,.2);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="hero">
+    <h1>Wealth Universe<br><em>Financial Calculator</em></h1>
+    <p>An educational toolkit to understand Mutual Funds — SIP, Lump Sum, Goal Planner &amp; Fund Comparison.</p>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab on"  onclick="go('sip',this)">🚀 SIP</button>
+    <button class="tab"     onclick="go('lump',this)">💎 Lump Sum</button>
+    <button class="tab"     onclick="go('goal',this)">🎯 Goal Planner</button>
+    <button class="tab"     onclick="go('cmp',this)">⚖️ Fund Compare</button>
+    <button class="tab"     onclick="go('learn',this)">📚 Learn</button>
+    <button class="tab"     onclick="go('journey',this)">🗺️ Journey</button>
+  </nav>
+
+  <!-- SIP -->
+  <div class="panel on" id="p-sip">
+    <div class="g2">
+      <div class="card">
+        <div class="ct">SIP Calculator</div>
+        <div class="cs">Invest a fixed amount monthly — compounding does the heavy lifting</div>
+        <div class="field"><label>Monthly Amount <span id="sa-l">₹5,000</span></label>
+          <input type="range" id="sa" min="500" max="100000" step="500" value="5000"></div>
+        <div class="field"><label>Annual Return <span id="sr-l">12%</span></label>
+          <input type="range" id="sr" min="1" max="30" step=".5" value="12"></div>
+        <div class="field"><label>Period <span id="sy-l">10 Years</span></label>
+          <input type="range" id="sy" min="1" max="40" step="1" value="10"></div>
+        <div class="pills">
+          <div class="pill"><div class="pl">Invested</div><div class="pv" id="si">—</div></div>
+          <div class="pill"><div class="pl">Returns</div><div class="pv g" id="sr2">—</div></div>
+          <div class="pill star"><div class="pl">Total Corpus</div><div class="pv a" id="st">—</div></div>
+        </div>
+      </div>
+      <div class="cw" style="border-radius:var(--radius);margin-top:0">
+        <canvas id="sc"></canvas>
+        <div class="insight" id="si2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LUMP SUM -->
+  <div class="panel" id="p-lump">
+    <div class="g2">
+      <div class="card">
+        <div class="ct">Lump Sum Calculator</div>
+        <div class="cs">Invest once — watch it grow exponentially over time</div>
+        <div class="field"><label>Investment Amount <span id="la-l">₹1,00,000</span></label>
+          <input type="range" id="la" min="10000" max="10000000" step="10000" value="100000"></div>
+        <div class="field"><label>Annual Return <span id="lr-l">12%</span></label>
+          <input type="range" id="lr" min="1" max="30" step=".5" value="12"></div>
+        <div class="field"><label>Period <span id="ly-l">10 Years</span></label>
+          <input type="range" id="ly" min="1" max="40" step="1" value="10"></div>
+        <div class="pills">
+          <div class="pill"><div class="pl">Principal</div><div class="pv" id="lp">—</div></div>
+          <div class="pill"><div class="pl">Gain</div><div class="pv g" id="lg">—</div></div>
+          <div class="pill star"><div class="pl">Maturity Value</div><div class="pv a" id="lt">—</div></div>
+        </div>
+      </div>
+      <div class="cw" style="border-radius:var(--radius);margin-top:0">
+        <canvas id="lc"></canvas>
+        <div class="insight" id="li2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOAL -->
+  <div class="panel" id="p-goal">
+    <div class="g2">
+      <div class="card">
+        <div class="ct">Goal-Based Planner</div>
+        <div class="cs">Work backwards from your dream number — find what to invest today</div>
+        <div class="field"><label>Target Goal <span id="ga-l">₹50 L</span></label>
+          <input type="range" id="ga" min="100000" max="100000000" step="100000" value="5000000"></div>
+        <div class="field"><label>Time Horizon <span id="gy-l">15 Years</span></label>
+          <input type="range" id="gy" min="1" max="40" step="1" value="15"></div>
+        <div class="field"><label>Expected Return <span id="gr-l">12%</span></label>
+          <input type="range" id="gr" min="1" max="30" step=".5" value="12"></div>
+        <div class="pills">
+          <div class="pill star"><div class="pl">Monthly SIP Needed</div><div class="pv a" id="gs">—</div></div>
+          <div class="pill"><div class="pl">Lump Sum Needed</div><div class="pv g" id="gl">—</div></div>
+          <div class="pill"><div class="pl">Total Invested</div><div class="pv" id="gi">—</div></div>
+        </div>
+        <div style="margin-top:18px">
+          <div class="gbl"><span>Investment vs returns split</span><span id="gp">—</span></div>
+          <div class="gbt"><div class="gbf" id="gb" style="width:0%"></div></div>
+          <div style="font-size:.68rem;color:#2a5a3e;margin-top:7px" id="gh2"></div>
+        </div>
+      </div>
+      <div class="cw" style="border-radius:var(--radius);margin-top:0">
+        <canvas id="gc2"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARE -->
+  <div class="panel" id="p-cmp">
+    <div class="card" style="margin-bottom:16px">
+      <div class="ct">Fund Type Comparison</div>
+      <div class="cs">Risk vs reward across major mutual fund categories</div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr>
+            <th>Fund Type</th><th>Risk</th><th>Avg Return</th>
+            <th>Best For</th><th>Lock-in</th><th>LTCG Tax</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>💰 Large Cap</td><td><span class="tag l">Low–Med</span></td><td style="color:var(--gold)">12–14%</td><td>Stable growth</td><td>None</td><td>10% &gt;₹1L</td></tr>
+            <tr><td>🔥 Mid Cap</td><td><span class="tag m">Medium</span></td><td style="color:var(--gold)">14–18%</td><td>Aggressive LT</td><td>None</td><td>10% &gt;₹1L</td></tr>
+            <tr><td>⚡ Small Cap</td><td><span class="tag h">High</span></td><td style="color:var(--gold)">16–22%</td><td>High risk-reward</td><td>None</td><td>10% &gt;₹1L</td></tr>
+            <tr><td>🛡️ Debt Fund</td><td><span class="tag l">Low</span></td><td style="color:var(--gold)">6–8%</td><td>Capital safety</td><td>None</td><td>Slab rate</td></tr>
+            <tr><td>⚖️ Hybrid</td><td><span class="tag m">Medium</span></td><td style="color:var(--gold)">10–13%</td><td>Balanced</td><td>None</td><td>10% &gt;₹1L</td></tr>
+            <tr><td>🏆 ELSS</td><td><span class="tag m">Medium</span></td><td style="color:var(--gold)">12–15%</td><td>Tax saving 80C</td><td>3 Years</td><td>10% &gt;₹1L</td></tr>
+            <tr><td>🌍 Index Fund</td><td><span class="tag l">Low–Med</span></td><td style="color:var(--gold)">11–13%</td><td>Passive, low-cost</td><td>None</td><td>10% &gt;₹1L</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="cw"><canvas id="rc" style="max-height:280px"></canvas></div>
+  </div>
+
+  <!-- LEARN -->
+  <div class="panel" id="p-learn">
+    <div class="eg">
+      <div class="ec"><div class="ei">📈</div><h3>What is SIP?</h3>
+        <p>Invest a fixed amount every month regardless of market conditions. Small habit, massive wealth over time.</p>
+        <div class="ef">M = P × [((1+r)ⁿ – 1) / r] × (1+r)</div></div>
+      <div class="ec"><div class="ei">🌱</div><h3>Power of Compounding</h3>
+        <p>Your returns earn returns. Starting at 25 vs 35 — the 10-year head start can double your final corpus.</p>
+        <div class="ef">A = P × (1 + r/n)^(n×t)</div></div>
+      <div class="ec"><div class="ei">⚖️</div><h3>NAV & Units</h3>
+        <p>Net Asset Value = per-unit price of a fund. ₹5000 at NAV ₹50 = 100 units. More units = more wealth.</p>
+        <div class="ef">Units = Amount ÷ NAV</div></div>
+      <div class="ec"><div class="ei">🎯</div><h3>Rupee Cost Averaging</h3>
+        <p>SIP buys more units when markets fall, fewer when they rise — naturally averaging your cost over time.</p>
+        <div class="ef">Avg Cost = Total ₹ ÷ Total Units</div></div>
+      <div class="ec"><div class="ei">🏷️</div><h3>Expense Ratio</h3>
+        <p>Annual fund fee. 1% vs 0.5% on ₹10L over 20 years can cost ₹5L+. Always compare before investing.</p>
+        <div class="ef">Net Return = Gross – Expense %</div></div>
+      <div class="ec"><div class="ei">📊</div><h3>CAGR</h3>
+        <p>Compound Annual Growth Rate — the steady yearly rate your investment would have grown. Best comparison metric.</p>
+        <div class="ef">CAGR = (End/Start)^(1/n) – 1</div></div>
+    </div>
+  </div>
+
+  <!-- JOURNEY -->
+  <div class="panel" id="p-journey">
+    <div class="card" style="margin-bottom:16px">
+      <div class="ct">The Rupee's Journey</div>
+      <div class="cs">How your ₹1,000/month travels from pocket to wealth</div>
+      <div class="jsteps">
+        <div class="jstep"><div class="jn">₹</div><div class="jt">You Invest</div><div class="jd">₹1,000/mo — skip 2 meals out</div></div>
+        <div class="jstep"><div class="jn">🏦</div><div class="jt">Fund House</div><div class="jd">Pools with thousands of investors</div></div>
+        <div class="jstep"><div class="jn">📊</div><div class="jt">Fund Manager</div><div class="jd">Spreads across 40–80 stocks</div></div>
+        <div class="jstep"><div class="jn">🔄</div><div class="jt">Compounding</div><div class="jd">Returns reinvest every month</div></div>
+        <div class="jstep"><div class="jn">🚀</div><div class="jt">Wealth!</div><div class="jd">₹1K × 20 yrs @12% = ₹9.9L</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Cost of Waiting — ₹1,000/month @12%</div>
+      <div class="cs">Every year you delay, the gap widens dramatically</div>
+      <div class="cw" style="border:none;background:transparent;padding:0;margin-top:4px">
+        <canvas id="dc" style="max-height:280px"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="ft-badge">IIT-BHU · FinCal Innovation Hackathon 2026</div>
+    <p>Built for <span>Technex, IIT (BHU) Varanasi</span> · March 2026</p>
+    <p style="margin-top:5px"><em>Investor Education Initiative — Not a financial product recommendation</em></p>
+  </footer>
+
+</div>
+
+<script>
+function fmt(n){
+  if(n>=10000000)return'₹'+(n/10000000).toFixed(2)+' Cr';
+  if(n>=100000)return'₹'+(n/100000).toFixed(2)+' L';
+  return'₹'+Math.round(n).toLocaleString('en-IN');
+}
+function sv(el){el.style.setProperty('--v',((el.value-el.min)/(el.max-el.min)*100)+'%');}
+
+const CD={
+  responsive:true,
+  animation:{duration:600,easing:'easeInOutQuart'},
+  plugins:{legend:{labels:{color:'#4a7a5e',font:{family:'Space Mono',size:10},boxWidth:12}}},
+  scales:{
+    x:{ticks:{color:'#2a5a3e',font:{size:9}},grid:{color:'rgba(45,206,122,.06)'}},
+    y:{ticks:{color:'#2a5a3e',font:{size:9},callback:v=>fmt(v)},grid:{color:'rgba(45,206,122,.06)'}}
+  }
+};
+
+let SC,LC,GC,RC,DC;
+function initCharts(){
+  SC=new Chart(document.getElementById('sc'),{type:'bar',
+    data:{labels:[],datasets:[
+      {label:'Invested',data:[],backgroundColor:'rgba(26,171,95,.55)',borderRadius:4},
+      {label:'Returns', data:[],backgroundColor:'rgba(0,201,167,.55)',borderRadius:4}]},
+    options:{...CD,interaction:{mode:'index'}}});
+
+  LC=new Chart(document.getElementById('lc'),{type:'line',
+    data:{labels:[],datasets:[{label:'Value',data:[],borderColor:'#2dce7a',
+      backgroundColor:'rgba(45,206,122,.08)',fill:true,tension:.4,pointRadius:2}]},
+    options:{...CD}});
+
+  GC=new Chart(document.getElementById('gc2'),{type:'doughnut',
+    data:{labels:['Invested','Returns'],datasets:[{data:[1,1],
+      backgroundColor:['rgba(26,171,95,.75)','rgba(0,201,167,.75)'],
+      borderColor:['#1aab5f','#00c9a7'],borderWidth:2,hoverOffset:8}]},
+    options:{responsive:true,cutout:'68%',
+      plugins:{legend:{labels:{color:'#4a7a5e',font:{family:'Space Mono',size:10}}}}}});
+
+  RC=new Chart(document.getElementById('rc'),{type:'radar',
+    data:{labels:['Returns','Safety','Liquidity','Tax Eff.','Access'],datasets:[
+      {label:'Equity',data:[80,55,90,75,85],borderColor:'#2dce7a',backgroundColor:'rgba(45,206,122,.1)',pointBackgroundColor:'#2dce7a'},
+      {label:'Debt',  data:[45,85,80,50,90],borderColor:'#00c9a7',backgroundColor:'rgba(0,201,167,.08)',pointBackgroundColor:'#00c9a7'},
+      {label:'ELSS',  data:[78,60,40,95,80],borderColor:'#f5c542',backgroundColor:'rgba(245,197,66,.08)',pointBackgroundColor:'#f5c542'}]},
+    options:{responsive:true,
+      plugins:{legend:{labels:{color:'#4a7a5e',font:{family:'Space Mono',size:10}}}},
+      scales:{r:{ticks:{color:'#2a5a3e',backdropColor:'transparent',font:{size:9}},
+        grid:{color:'rgba(45,206,122,.1)'},
+        pointLabels:{color:'#4a7a5e',font:{size:10}}}}}});
+
+  DC=new Chart(document.getElementById('dc'),{type:'bar',
+    data:{labels:['10 Yrs','15 Yrs','20 Yrs','25 Yrs','30 Yrs'],
+      datasets:[{label:'₹1000/mo @12%',
+        data:[10,15,20,25,30].map(y=>Math.round(1000*((Math.pow(1.01,y*12)-1)/.01)*1.01)),
+        backgroundColor:['rgba(26,171,95,.7)','rgba(0,180,130,.7)','rgba(0,201,167,.7)','rgba(245,197,66,.7)','rgba(255,140,80,.85)'],
+        borderRadius:7}]},
+    options:{...CD}});
+}
+
+function calcSIP(){
+  const P=+sa.value,r=+sr.value/100/12,n=+sy.value*12;
+  const tot=P*((Math.pow(1+r,n)-1)/r)*(1+r),inv=P*n;
+  document.getElementById('si').textContent=fmt(inv);
+  document.getElementById('sr2').textContent=fmt(tot-inv);
+  document.getElementById('st').textContent=fmt(tot);
+  document.getElementById('sa-l').textContent=fmt(P);
+  document.getElementById('sr-l').textContent=sr.value+'%';
+  document.getElementById('sy-l').textContent=sy.value+' Years';
+  document.getElementById('si2').textContent='Money grew '+(tot/inv).toFixed(1)+'× — returns are '+Math.round((tot-inv)/inv*100)+'% of corpus';
+  const yrs=+sy.value,lb=[],ia=[],ra=[];
+  for(let y=1;y<=yrs;y++){const nn=y*12,tv=P*((Math.pow(1+r,nn)-1)/r)*(1+r);lb.push('Y'+y);ia.push(P*nn);ra.push(tv-P*nn);}
+  SC.data.labels=lb;SC.data.datasets[0].data=ia;SC.data.datasets[1].data=ra;SC.update();
+}
+function calcLS(){
+  const P=+la.value,r=+lr.value/100,yr=+ly.value,tot=P*Math.pow(1+r,yr);
+  document.getElementById('lp').textContent=fmt(P);
+  document.getElementById('lg').textContent=fmt(tot-P);
+  document.getElementById('lt').textContent=fmt(tot);
+  document.getElementById('la-l').textContent=fmt(P);
+  document.getElementById('lr-l').textContent=lr.value+'%';
+  document.getElementById('ly-l').textContent=yr+' Years';
+  document.getElementById('li2').textContent='₹1 became ₹'+(tot/P).toFixed(2)+' in '+yr+' years';
+  const lb=[],vs=[];
+  for(let y=0;y<=yr;y++){lb.push('Y'+y);vs.push(P*Math.pow(1+r,y));}
+  LC.data.labels=lb;LC.data.datasets[0].data=vs;LC.update();
+}
+function calcGoal(){
+  const G=+ga.value,yr=+gy.value,r=+gr.value/100,rm=r/12,n=yr*12;
+  const sip=G*rm/((Math.pow(1+rm,n)-1)*(1+rm)),lump=G/Math.pow(1+r,yr),inv=sip*n;
+  document.getElementById('gs').textContent=fmt(sip);
+  document.getElementById('gl').textContent=fmt(lump);
+  document.getElementById('gi').textContent=fmt(inv);
+  document.getElementById('ga-l').textContent=fmt(G);
+  document.getElementById('gy-l').textContent=yr+' Years';
+  document.getElementById('gr-l').textContent=gr.value+'%';
+  const pct=Math.min(100,Math.round(inv/G*100));
+  document.getElementById('gb').style.width=pct+'%';
+  document.getElementById('gp').textContent=pct+'% invested, '+(100-pct)+'% returns';
+  document.getElementById('gh2').textContent='Market does '+(100-pct)+'% of the work — '+fmt(G-inv)+' comes from returns, not your pocket';
+  GC.data.datasets[0].data=[inv,G-inv];GC.update();
+}
+function bind(ids,fn){ids.forEach(id=>{const el=document.getElementById(id);el.addEventListener('input',()=>{sv(el);fn();});sv(el);});}
+function go(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+name).classList.add('on');btn.classList.add('on');
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  initCharts();
+  bind(['sa','sr','sy'],calcSIP);
+  bind(['la','lr','ly'],calcLS);
+  bind(['ga','gy','gr'],calcGoal);
+  calcSIP();calcLS();calcGoal();
+});
+</script>
+</body>
+</html>
