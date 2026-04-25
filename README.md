@@ -33,7 +33,7 @@ FinCal is an interactive, educational financial calculator built for everyday in
 - HTML5 + CSS3 + Vanilla JavaScript
 - Chart.js (bar, line, doughnut, radar charts)
 - No frameworks
-- No install — runs in any browser
+
 
 ---
 
