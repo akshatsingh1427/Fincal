@@ -11,7 +11,7 @@
 ---
 
 ## 📌 About
-FinCal is an interactive, educational financial calculator built for everyday investors. It covers SIP, Lump Sum, Goal Planning & Fund Comparison with live charts, real-time calculations, and concept explainers — making mutual fund literacy simple, visual & engaging.
+FinCal is an interactive, educational financial calculator built for everyday investors. It covers SIP, Lump Sum, Goal Planning & Fund Comparison with live charts, real-time calculations, and concept explainers — making mutual fund literacy simple, visual.
 
 ---
 
